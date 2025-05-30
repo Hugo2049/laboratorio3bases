@@ -1,6 +1,5 @@
 # laboratorio3bases
 
-Video del funcionamiento: https://www.youtube.com/watch?v=fASlM49r5wk
 
 ![11](https://github.com/user-attachments/assets/113b610f-1f93-4ea8-998f-b7e8f4218583)
 ![12](https://github.com/user-attachments/assets/73d2cace-c39a-4d57-94e6-c40ac99b2a6b)
