@@ -1,0 +1,537 @@
+{% extends 'libros/base.html' %}
+
+{% block title %}
+    {% if object %}Editar Libro: {{ object.titulo }}{% else %}Nuevo Libro{% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block header %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>
+            <i class="fas fa-book-open"></i> 
+            {% if object %}Editar Libro{% else %}Nuevo Libro{% endif %}
+        </h1>
+        <p class="lead">
+            {% if object %}Modificar la información del libro "{{ object.titulo }}"{% else %}Agregar un nuevo libro al inventario{% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'libro_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Inventario
+        </a>
+    </div>
+</div>
+<hr>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Formulario Principal -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit"></i> Información del Libro
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="libroForm">
+                    {% csrf_token %}
+                    
+                    <!-- Información Básica -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="text-primary"><i class="fas fa-info-circle"></i> Información Básica</h6>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                Título del Libro <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="{{ form.titulo.name }}" 
+                                   id="{{ form.titulo.id_for_label }}" 
+                                   value="{{ form.titulo.value|default:'' }}" 
+                                   placeholder="Ingrese el título completo del libro" required>
+                            {% if form.titulo.errors %}
+                                <div class="text-danger small mt-1">{{ form.titulo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ form.isbn.id_for_label }}" class="form-label">
+                                ISBN <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" name="{{ form.isbn.name }}" 
+                                   id="{{ form.isbn.id_for_label }}" 
+                                   value="{{ form.isbn.value|default:'' }}" 
+                                   placeholder="978-XXXXXXXXX" maxlength="13" required>
+                            {% if form.isbn.errors %}
+                                <div class="text-danger small mt-1">{{ form.isbn.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                Descripción <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" name="{{ form.descripcion.name }}" 
+                                      id="{{ form.descripcion.id_for_label }}" rows="4" 
+                                      placeholder="Descripción detallada del libro, sinopsis, contenido..." required>{{ form.descripcion.value|default:'' }}</textarea>
+                            {% if form.descripcion.errors %}
+                                <div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Autor y Género -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="text-primary"><i class="fas fa-users"></i> Autor y Clasificación</h6>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.autor_principal.id_for_label }}" class="form-label">
+                                Autor Principal <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="{{ form.autor_principal.name }}" 
+                                    id="{{ form.autor_principal.id_for_label }}" required>
+                                <option value="">Seleccionar Autor...</option>
+                                {% for autor in autores %}
+                                    <option value="{{ autor.id }}" 
+                                            {% if form.autor_principal.value == autor.id %}selected{% endif %}
+                                            data-email="{{ autor.email }}"
+                                            data-biografia="{{ autor.biografia|default:'Sin biografía disponible'|truncatechars:100 }}"
+                                            data-nacimiento="{{ autor.fecha_nacimiento|default:'No especificada' }}">
+                                        {{ autor.nombre }} {{ autor.apellido }}
+                                        {% if autor.fecha_nacimiento %} ({{ autor.fecha_nacimiento.year }}){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.autor_principal.errors %}
+                                <div class="text-danger small mt-1">{{ form.autor_principal.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.genero.id_for_label }}" class="form-label">
+                                Género Literario <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="{{ form.genero.name }}" 
+                                    id="{{ form.genero.id_for_label }}" required>
+                                <option value="">Seleccionar Género...</option>
+                                {% for genero in generos %}
+                                    <option value="{{ genero.id }}" 
+                                            {% if form.genero.value == genero.id %}selected{% endif %}
+                                            data-descripcion="{{ genero.descripcion|default:'Sin descripción disponible'|truncatechars:100 }}">
+                                        {{ genero.nombre }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.genero.errors %}
+                                <div class="text-danger small mt-1">{{ form.genero.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Info adicional del autor seleccionado -->
+                    <div class="row mb-3" id="autorInfo" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>Email:</strong> <span id="autorEmail"></span> | 
+                                    <strong>Nacimiento:</strong> <span id="autorNacimiento"></span><br>
+                                    <strong>Biografía:</strong> <span id="autorBiografia"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info adicional del género seleccionado -->
+                    <div class="row mb-3" id="generoInfo" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-success">
+                                <small>
+                                    <strong>Descripción del Género:</strong> <span id="generoDescripcion"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles Comerciales -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="text-primary"><i class="fas fa-dollar-sign"></i> Información Comercial</h6>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.precio.id_for_label }}" class="form-label">
+                                Precio (Q) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" name="{{ form.precio.name }}" 
+                                   id="{{ form.precio.id_for_label }}" 
+                                   value="{{ form.precio.value|default:'0.00' }}" 
+                                   step="0.01" min="0.01" required>
+                            {% if form.precio.errors %}
+                                <div class="text-danger small mt-1">{{ form.precio.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.stock.id_for_label }}" class="form-label">
+                                Stock Inicial <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" name="{{ form.stock.name }}" 
+                                   id="{{ form.stock.id_for_label }}" 
+                                   value="{{ form.stock.value|default:'0' }}" 
+                                   min="0" required>
+                            {% if form.stock.errors %}
+                                <div class="text-danger small mt-1">{{ form.stock.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.paginas.id_for_label }}" class="form-label">
+                                Número de Páginas <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" name="{{ form.paginas.name }}" 
+                                   id="{{ form.paginas.id_for_label }}" 
+                                   value="{{ form.paginas.value|default:'' }}" 
+                                   min="1" required>
+                            {% if form.paginas.errors %}
+                                <div class="text-danger small mt-1">{{ form.paginas.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.fecha_publicacion.id_for_label }}" class="form-label">
+                                Fecha de Publicación <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" name="{{ form.fecha_publicacion.name }}" 
+                                   id="{{ form.fecha_publicacion.id_for_label }}" 
+                                   value="{{ form.fecha_publicacion.value|date:'Y-m-d'|default:'' }}" required>
+                            {% if form.fecha_publicacion.errors %}
+                                <div class="text-danger small mt-1">{{ form.fecha_publicacion.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="{{ form.activo.name }}" 
+                                       id="{{ form.activo.id_for_label }}" 
+                                       {% if form.activo.value %}checked{% endif %}>
+                                <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                    <strong>Libro Activo</strong>
+                                    <small class="text-muted d-block">Desmarcar si el libro no está disponible para venta</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body p-2">
+                                    <small>
+                                        <strong>Valor Total del Inventario:</strong><br>
+                                        <span id="valorInventario" class="h6 text-success">Q0.00</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save"></i> 
+                                        {% if object %}Actualizar Libro{% else %}Guardar Libro{% endif %}
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="window.history.back()">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </button>
+                                </div>
+                                {% if object %}
+                                <div>
+                                    <a href="{% url 'libro_delete' object.id %}" class="btn btn-danger btn-lg"
+                                       onclick="return confirm('¿Estás seguro de eliminar este libro? Esta acción no se puede deshacer.')">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Información -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Guía de Formulario</h6>
+            </div>
+            <div class="card-body">
+                <h6>Campos Obligatorios:</h6>
+                <ul class="small">
+                    <li><strong>Título:</strong> Nombre completo del libro</li>
+                    <li><strong>ISBN:</strong> Código único de 13 dígitos</li>
+                    <li><strong>Descripción:</strong> Sinopsis o resumen</li>
+                    <li><strong>Autor Principal:</strong> Escritor del libro</li>
+                    <li><strong>Género:</strong> Clasificación literaria</li>
+                    <li><strong>Precio:</strong> Valor de venta en quetzales</li>
+                    <li><strong>Stock:</strong> Cantidad en inventario</li>
+                </ul>
+                
+                {% if object %}
+                <hr>
+                <h6>Estadísticas del Libro:</h6>
+                <p class="small mb-1"><strong>ID:</strong> #{{ object.id }}</p>
+                <p class="small mb-1"><strong>Creado:</strong> {{ object.fecha_creacion|date:"d/m/Y"|default:"No disponible" }}</p>
+                {% if object.ventas.count > 0 %}
+                <p class="small mb-1"><strong>Ventas:</strong> {{ object.ventas.count }} unidades</p>
+                <p class="small mb-1"><strong>Ingresos:</strong> Q{{ object.total_ingresos|floatformat:2|default:"0.00" }}</p>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Validación de ISBN -->
+        <div class="card mt-3" id="isbnValidation" style="display: none;">
+            <div class="card-body">
+                <div class="alert alert-info mb-0">
+                    <small>
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Formato ISBN:</strong> El ISBN debe tener exactamente 13 dígitos (978 o 979 seguido de 10 dígitos).
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerta de Stock -->
+        <div class="card mt-3" id="alertaStockBajo" style="display: none;">
+            <div class="card-body">
+                <div class="alert alert-warning mb-0">
+                    <small>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Stock Bajo:</strong> Considera aumentar el inventario si planeas ventas inmediatas.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Mercado -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Sugerencias de Precio</h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <div class="d-flex justify-content-between">
+                        <span>Precio por página:</span>
+                        <span id="precioPorPagina">Q0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Rango sugerido:</span>
+                        <span id="rangoSugerido">Q0.00 - Q0.00</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="text-center">
+                        <small class="text-muted">Basado en páginas y género</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nuevo Autor (placeholder) -->
+<div class="modal fade" id="nuevoAutorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo Autor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Funcionalidad para crear nuevo autor directamente desde aquí.</p>
+                <p class="text-muted">Por ahora, puedes crear autores desde el panel de administración.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="/admin/libros/autor/add/" target="_blank" class="btn btn-primary">Ir a Admin</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nuevo Género (placeholder) -->
+<div class="modal fade" id="nuevoGeneroModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuevo Género</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Funcionalidad para crear nuevo género directamente desde aquí.</p>
+                <p class="text-muted">Por ahora, puedes crear géneros desde el panel de administración.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="/admin/libros/genero/add/" target="_blank" class="btn btn-primary">Ir a Admin</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const autorSelect = document.getElementById('{{ form.autor_principal.id_for_label }}');
+    const generoSelect = document.getElementById('{{ form.genero.id_for_label }}');
+    const precioInput = document.getElementById('{{ form.precio.id_for_label }}');
+    const stockInput = document.getElementById('{{ form.stock.id_for_label }}');
+    const paginasInput = document.getElementById('{{ form.paginas.id_for_label }}');
+    const isbnInput = document.getElementById('{{ form.isbn.id_for_label }}');
+    
+    // Mostrar información del autor seleccionado
+    autorSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const autorInfo = document.getElementById('autorInfo');
+        
+        if (selectedOption.value) {
+            document.getElementById('autorEmail').textContent = selectedOption.dataset.email;
+            document.getElementById('autorNacimiento').textContent = selectedOption.dataset.nacimiento;
+            document.getElementById('autorBiografia').textContent = selectedOption.dataset.biografia;
+            autorInfo.style.display = 'block';
+        } else {
+            autorInfo.style.display = 'none';
+        }
+    });
+    
+    // Mostrar información del género seleccionado
+    generoSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const generoInfo = document.getElementById('generoInfo');
+        
+        if (selectedOption.value) {
+            document.getElementById('generoDescripcion').textContent = selectedOption.dataset.descripcion;
+            generoInfo.style.display = 'block';
+        } else {
+            generoInfo.style.display = 'none';
+        }
+        
+        calcularSugerenciasPrecio();
+    });
+    
+    // Validar formato de ISBN
+    isbnInput.addEventListener('input', function() {
+        const isbn = this.value.replace(/[^0-9]/g, '');
+        const isbnValidation = document.getElementById('isbnValidation');
+        
+        if (isbn.length > 0 && isbn.length !== 13) {
+            isbnValidation.style.display = 'block';
+        } else {
+            isbnValidation.style.display = 'none';
+        }
+        
+        // Formatear automáticamente
+        if (isbn.length === 13) {
+            this.value = isbn.substring(0, 3) + '-' + isbn.substring(3);
+        }
+    });
+    
+    // Calcular valor del inventario
+    function calcularValorInventario() {
+        const precio = parseFloat(precioInput.value) || 0;
+        const stock = parseInt(stockInput.value) || 0;
+        const valorTotal = precio * stock;
+        
+        document.getElementById('valorInventario').textContent = 'Q' + valorTotal.toFixed(2);
+        
+        // Alerta de stock bajo
+        const alertaStock = document.getElementById('alertaStockBajo');
+        if (stock > 0 && stock < 10) {
+            alertaStock.style.display = 'block';
+        } else {
+            alertaStock.style.display = 'none';
+        }
+    }
+    
+    // Calcular sugerencias de precio
+    function calcularSugerenciasPrecio() {
+        const paginas = parseInt(paginasInput.value) || 0;
+        const generoOption = generoSelect.options[generoSelect.selectedIndex];
+        
+        if (paginas > 0) {
+            // Precio base por página según género (simulado)
+            let precioPorPagina = 0.05; // Base
+            
+            if (generoOption.value) {
+                const generoNombre = generoOption.text.toLowerCase();
+                if (generoNombre.includes('técnico') || generoNombre.includes('académico')) {
+                    precioPorPagina = 0.08;
+                } else if (generoNombre.includes('literatura') || generoNombre.includes('novela')) {
+                    precioPorPagina = 0.06;
+                }
+            }
+            
+            const precioSugerido = paginas * precioPorPagina;
+            const rangoMin = precioSugerido * 0.8;
+            const rangoMax = precioSugerido * 1.3;
+            
+            document.getElementById('precioPorPagina').textContent = 'Q' + precioPorPagina.toFixed(3);
+            document.getElementById('rangoSugerido').textContent = 
+                'Q' + rangoMin.toFixed(2) + ' - Q' + rangoMax.toFixed(2);
+        } else {
+            document.getElementById('precioPorPagina').textContent = 'Q0.000';
+            document.getElementById('rangoSugerido').textContent = 'Q0.00 - Q0.00';
+        }
+    }
+    
+    // Event listeners para cálculos automáticos
+    precioInput.addEventListener('input', calcularValorInventario);
+    stockInput.addEventListener('input', calcularValorInventario);
+    paginasInput.addEventListener('input', calcularSugerenciasPrecio);
+    
+    // Validación de formulario antes de envío
+    document.getElementById('libroForm').addEventListener('submit', function(e) {
+        const isbn = isbnInput.value.replace(/[^0-9]/g, ''); 
+
+        if (isbn.length !== 13) {
+            e.preventDefault();
+            alert('El ISBN debe tener exactamente 13 dígitos numéricos.');
+            isbnInput.focus();
+            return false;
+        }
+
+        const precio = parseFloat(precioInput.value);
+        if (precio <= 0) {
+            e.preventDefault();
+            alert('El precio debe ser mayor a 0.');
+            precioInput.focus();
+            return false;
+        }
+    });
+
+    
+    // Inicializar valores si hay datos previos
+    if (autorSelect.value) autorSelect.dispatchEvent(new Event('change'));
+    if (generoSelect.value) generoSelect.dispatchEvent(new Event('change'));
+    calcularValorInventario();
+    calcularSugerenciasPrecio();
+});
+</script>
+{% endblock %}

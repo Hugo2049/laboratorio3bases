@@ -1,0 +1,15 @@
+{% extends 'libros/base.html' %}
+
+{% block content %}
+  <h2>¿Estás seguro de que deseas eliminar esta venta?</h2>
+
+  <form method="post">
+    {% csrf_token %}
+    <p><strong>Cliente:</strong> {{ venta.cliente }}</p>
+    <p><strong>Libro:</strong> {{ venta.libro }}</p>
+    <p><strong>Fecha:</strong> {{ venta.fecha_venta }}</p>
+
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+    <a href="{% url 'reporte_ventas' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+{% endblock %}

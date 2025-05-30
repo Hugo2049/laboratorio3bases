@@ -1,0 +1,404 @@
+{% extends 'libros/base.html' %}
+
+{% block title %}
+    {% if object %}Editar Venta #{{ object.id }}{% else %}Nueva Venta{% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block header %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>
+            <i class="fas fa-shopping-cart"></i> 
+            {% if object %}Editar Venta #{{ object.id }}{% else %}Nueva Venta{% endif %}
+        </h1>
+        <p class="lead">
+            {% if object %}Modificar los datos de la venta existente{% else %}Registrar una nueva venta en el sistema{% endif %}
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'index' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver al Listado
+        </a>
+    </div>
+</div>
+<hr>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Formulario Principal -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit"></i> Datos de la Venta
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="ventaForm">
+                    {% csrf_token %}
+                    
+                    <!-- Información del Cliente -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="text-primary"><i class="fas fa-user"></i> Información del Cliente</h6>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="{{ form.cliente.id_for_label }}" class="form-label">
+                                Cliente <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="{{ form.cliente.name }}" id="{{ form.cliente.id_for_label }}" required>
+                                <option value="">Seleccionar Cliente...</option>
+                                {% for cliente in clientes %}
+                                    <option value="{{ cliente.id }}" 
+                                            {% if form.cliente.value == cliente.id %}selected{% endif %}
+                                            data-email="{{ cliente.email }}"
+                                            data-tipo="{{ cliente.get_tipo_cliente_display }}"
+                                            data-telefono="{{ cliente.telefono|default:'' }}">
+                                        {{ cliente.nombre }} {{ cliente.apellido }} ({{ cliente.get_tipo_cliente_display }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.cliente.errors %}
+                                <div class="text-danger small mt-1">{{ form.cliente.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Info adicional del cliente seleccionado -->
+                    <div class="row mb-3" id="clienteInfo" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>Email:</strong> <span id="clienteEmail"></span> | 
+                                    <strong>Tipo:</strong> <span id="clienteTipo"></span> | 
+                                    <strong>Teléfono:</strong> <span id="clienteTelefono"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del Libro -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="text-primary"><i class="fas fa-book"></i> Información del Libro</h6>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="{{ form.libro.id_for_label }}" class="form-label">
+                                Libro <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="{{ form.libro.name }}" id="{{ form.libro.id_for_label }}" required>
+                                <option value="">Seleccionar Libro...</option>
+                                {% for libro in libros %}
+                                    <option value="{{ libro.id }}" 
+                                            {% if form.libro.value == libro.id %}selected{% endif %}
+                                            data-precio="{{ libro.precio }}"
+                                            data-stock="{{ libro.stock }}"
+                                            data-isbn="{{ libro.isbn }}"
+                                            data-autor="{{ libro.autor_principal.nombre }} {{ libro.autor_principal.apellido }}"
+                                            data-genero="{{ libro.genero.nombre }}">
+                                        {{ libro.titulo }} - Q{{ libro.precio }} (Stock: {{ libro.stock }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.libro.errors %}
+                                <div class="text-danger small mt-1">{{ form.libro.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Info adicional del libro seleccionado -->
+                    <div class="row mb-3" id="libroInfo" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="alert alert-success">
+                                <small>
+                                    <strong>ISBN:</strong> <span id="libroIsbn"></span> | 
+                                    <strong>Autor:</strong> <span id="libroAutor"></span> | 
+                                    <strong>Género:</strong> <span id="libroGenero"></span> | 
+                                    <strong>Stock Disponible:</strong> <span id="libroStock"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles de la Venta -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="text-primary"><i class="fas fa-calculator"></i> Detalles de la Venta</h6>
+                            <hr class="mt-2 mb-3">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="{{ form.cantidad.id_for_label }}" class="form-label">
+                                Cantidad <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" name="{{ form.cantidad.name }}" 
+                                   id="{{ form.cantidad.id_for_label }}" 
+                                   value="{{ form.cantidad.value|default:'1' }}" 
+                                   min="1" required>
+                            {% if form.cantidad.errors %}
+                                <div class="text-danger small mt-1">{{ form.cantidad.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.precio_unitario.id_for_label }}" class="form-label">
+                                Precio Unitario <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" name="{{ form.precio_unitario.name }}" 
+                                   id="{{ form.precio_unitario.id_for_label }}" 
+                                   value="{{ form.precio_unitario.value|default:'0.00' }}" 
+                                   step="0.01" min="0.01" required>
+                            {% if form.precio_unitario.errors %}
+                                <div class="text-danger small mt-1">{{ form.precio_unitario.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label for="{{ form.descuento.id_for_label }}" class="form-label">
+                                Descuento (%)
+                            </label>
+                            <input type="number" class="form-control" name="{{ form.descuento.name }}" 
+                                   id="{{ form.descuento.id_for_label }}" 
+                                   value="{{ form.descuento.value|default:'0.0' }}" 
+                                   step="0.1" min="0" max="100">
+                            {% if form.descuento.errors %}
+                                <div class="text-danger small mt-1">{{ form.descuento.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Total Calculado</label>
+                            <input type="text" class="form-control bg-light" id="totalCalculado" readonly value="Q0.00">
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="{{ form.estado.id_for_label }}" class="form-label">
+                                Estado <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="{{ form.estado.name }}" id="{{ form.estado.id_for_label }}" required>
+                                <option value="pendiente" {% if form.estado.value == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="confirmada" {% if form.estado.value == 'confirmada' %}selected{% endif %}>Confirmada</option>
+                                <option value="enviada" {% if form.estado.value == 'enviada' %}selected{% endif %}>Enviada</option>
+                                <option value="entregada" {% if form.estado.value == 'entregada' %}selected{% endif %}>Entregada</option>
+                                <option value="cancelada" {% if form.estado.value == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                            </select>
+                            {% if form.estado.errors %}
+                                <div class="text-danger small mt-1">{{ form.estado.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <label for="{{ form.notas.id_for_label }}" class="form-label">
+                                Notas Adicionales
+                            </label>
+                            <textarea class="form-control" name="{{ form.notas.name }}" 
+                                      id="{{ form.notas.id_for_label }}" rows="2" 
+                                      placeholder="Comentarios adicionales sobre la venta...">{{ form.notas.value|default:'' }}</textarea>
+                            {% if form.notas.errors %}
+                                <div class="text-danger small mt-1">{{ form.notas.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save"></i> 
+                                        {% if object %}Actualizar Venta{% else %}Guardar Venta{% endif %}
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="window.history.back()">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </button>
+                                </div>
+                                {% if object %}
+                                <div>
+                                    <a href="{% url 'venta_delete' object.id %}" class="btn btn-danger btn-lg"
+                                       onclick="return confirm('¿Estás seguro de eliminar esta venta?')">
+                                        <i class="fas fa-trash"></i> Eliminar
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel de Información -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Información</h6>
+            </div>
+            <div class="card-body">
+                <h6>Instrucciones:</h6>
+                <ul class="small">
+                    <li>Selecciona un cliente existente o crea uno nuevo</li>
+                    <li>Elige el libro a vender</li>
+                    <li>Define la cantidad y verifica el stock</li>
+                    <li>El precio se autocompletará según el libro</li>
+                    <li>Aplica descuento si es necesario</li>
+                    <li>El total se calcula automáticamente</li>
+                </ul>
+                
+                {% if object %}
+                <hr>
+                <h6>Detalles de la Venta:</h6>
+                <p class="small mb-1"><strong>ID:</strong> #{{ object.id }}</p>
+                <p class="small mb-1"><strong>Creada:</strong> {{ object.fecha_venta|date:"d/m/Y H:i" }}</p>
+                <p class="small mb-1"><strong>Actualizada:</strong> {{ object.fecha_actualizacion|date:"d/m/Y H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Validaciones de Stock -->
+        <div class="card mt-3" id="alertaStock" style="display: none;">
+            <div class="card-body">
+                <div class="alert alert-warning mb-0">
+                    <small>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>¡Atención!</strong> La cantidad solicitada excede el stock disponible.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculadora de Descuentos -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-calculator"></i> Cálculo de Precio</h6>
+            </div>
+            <div class="card-body">
+                <div class="small">
+                    <div class="d-flex justify-content-between">
+                        <span>Subtotal:</span>
+                        <span id="subtotalCalc">Q0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Descuento:</span>
+                        <span id="descuentoCalc">Q0.00</span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total Final:</span>
+                        <span id="totalFinalCalc">Q0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('{{ form.cliente.id_for_label }}');
+    const libroSelect = document.getElementById('{{ form.libro.id_for_label }}');
+    const cantidadInput = document.getElementById('{{ form.cantidad.id_for_label }}');
+    const precioInput = document.getElementById('{{ form.precio_unitario.id_for_label }}');
+    const descuentoInput = document.getElementById('{{ form.descuento.id_for_label }}');
+    
+    // Mostrar info del cliente seleccionado
+    clienteSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const clienteInfo = document.getElementById('clienteInfo');
+        
+        if (selectedOption.value) {
+            document.getElementById('clienteEmail').textContent = selectedOption.dataset.email;
+            document.getElementById('clienteTipo').textContent = selectedOption.dataset.tipo;
+            document.getElementById('clienteTelefono').textContent = selectedOption.dataset.telefono || 'No especificado';
+            clienteInfo.style.display = 'block';
+        } else {
+            clienteInfo.style.display = 'none';
+        }
+    });
+    
+    // Mostrar info del libro seleccionado y actualizar precio
+    libroSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const libroInfo = document.getElementById('libroInfo');
+        
+        if (selectedOption.value) {
+            document.getElementById('libroIsbn').textContent = selectedOption.dataset.isbn;
+            document.getElementById('libroAutor').textContent = selectedOption.dataset.autor;
+            document.getElementById('libroGenero').textContent = selectedOption.dataset.genero;
+            document.getElementById('libroStock').textContent = selectedOption.dataset.stock;
+            
+            // Actualizar precio automáticamente
+            precioInput.value = parseFloat(selectedOption.dataset.precio).toFixed(2);
+            
+            libroInfo.style.display = 'block';
+            verificarStock();
+            calcularTotal();
+        } else {
+            libroInfo.style.display = 'none';
+            precioInput.value = '0.00';
+            calcularTotal();
+        }
+    });
+    
+    // Verificar stock disponible
+    function verificarStock() {
+        const libroOption = libroSelect.options[libroSelect.selectedIndex];
+        const alertaStock = document.getElementById('alertaStock');
+        
+        if (libroOption.value && cantidadInput.value) {
+            const stockDisponible = parseInt(libroOption.dataset.stock);
+            const cantidadSolicitada = parseInt(cantidadInput.value);
+            
+            if (cantidadSolicitada > stockDisponible) {
+                alertaStock.style.display = 'block';
+            } else {
+                alertaStock.style.display = 'none';
+            }
+        }
+    }
+    
+    // Calcular total automáticamente
+    function calcularTotal() {
+        const cantidad = parseFloat(cantidadInput.value) || 0;
+        const precio = parseFloat(precioInput.value) || 0;
+        const descuento = parseFloat(descuentoInput.value) || 0;
+        
+        const subtotal = cantidad * precio;
+        const montoDescuento = subtotal * (descuento / 100);
+        const total = subtotal - montoDescuento;
+        
+        document.getElementById('totalCalculado').value = 'Q' + total.toFixed(2);
+        document.getElementById('subtotalCalc').textContent = 'Q' + subtotal.toFixed(2);
+        document.getElementById('descuentoCalc').textContent = 'Q' + montoDescuento.toFixed(2);
+        document.getElementById('totalFinalCalc').textContent = 'Q' + total.toFixed(2);
+    }
+    
+    // Event listeners para cálculos automáticos
+    cantidadInput.addEventListener('input', function() {
+        verificarStock();
+        calcularTotal();
+    });
+    
+    precioInput.addEventListener('input', calcularTotal);
+    descuentoInput.addEventListener('input', calcularTotal);
+    
+    // Inicializar cálculos si hay valores previos
+    if (clienteSelect.value) clienteSelect.dispatchEvent(new Event('change'));
+    if (libroSelect.value) libroSelect.dispatchEvent(new Event('change'));
+    calcularTotal();
+});
+</script>
+{% endblock %}

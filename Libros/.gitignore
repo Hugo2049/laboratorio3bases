@@ -1,0 +1,48 @@
+
+# Entornos virtuales
+venv/
+.env/
+*.env
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de configuración del entorno
+*.sqlite3
+*.log
+
+# Archivos de usuario de IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Archivos de pruebas y cobertura
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache/
+.pytest_cache/
+
+# Archivos de migraciones que puedan ser recreados (opcional, según tu flujo de trabajo)
+# Puedes comentar esta línea si quieres incluirlas
+# */migrations/*.py
+*/migrations/__pycache__/
+
+# Archivos estáticos recolectados
+/staticfiles/
+/static/
+
+# Archivos de medios subidos por el usuario
+/media/
+
+# Archivos de docker o CI/CD temporales
+docker-compose.override.yml
+*.pid
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db

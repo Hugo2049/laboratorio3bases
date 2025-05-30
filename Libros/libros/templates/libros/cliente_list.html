@@ -1,0 +1,28 @@
+{% extends 'libros/base.html' %}
+{% block content %}
+  <h2>Lista de Clientes</h2>
+  <a href="{% url 'cliente_create' %}" class="btn btn-success">Nuevo Cliente</a>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Tipo</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cliente in clientes %}
+        <tr>
+          <td>{{ cliente.nombre_completo }}</td>
+          <td>{{ cliente.email }}</td>
+          <td>{{ cliente.get_tipo_cliente_display }}</td>
+          <td>
+            <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn-warning">Editar</a>
+            <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn-danger">Eliminar</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

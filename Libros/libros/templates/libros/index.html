@@ -1,0 +1,187 @@
+{% extends 'libros/base.html' %}
+
+{% block title %}Inicio - {{ block.super }}{% endblock %}
+
+{% block header %}
+<div class="row">
+    <div class="col-md-8">
+        <h1><i class="fas fa-chart-line"></i> {{ title }}</h1>
+        <p class="lead">Vista completa de todas las ventas (usando VIEW de base de datos)</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'venta_create' %}" class="btn btn-success btn-lg">
+            <i class="fas fa-plus"></i> Nueva Venta
+        </a>
+    </div>
+</div>
+<hr>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-table"></i> Historial de Ventas</h5>
+            </div>
+            <div class="card-body">
+                {% if ventas %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Libro</th>
+                                    <th>Autor</th>
+                                    <th>Género</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Descuento</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for venta in ventas %}
+                                <tr>
+                                    <td><strong>#{{ venta.venta_id }}</strong></td>
+                                    <td>
+                                        <div>{{ venta.cliente_nombre }} {{ venta.cliente_apellido }}</div>
+                                        <small class="text-muted">{{ venta.cliente_email }}</small>
+                                    </td>
+                                    <td>
+                                        <div><strong>{{ venta.libro_titulo }}</strong></div>
+                                        <small class="text-muted">ISBN: {{ venta.isbn }}</small>
+                                    </td>
+                                    <td>{{ venta.autor_nombre }} {{ venta.autor_apellido }}</td>
+                                    <td><span class="badge bg-info">{{ venta.genero_nombre }}</span></td>
+                                    <td class="text-center">{{ venta.cantidad }}</td>
+                                    <td>Q{{ venta.precio_unitario|floatformat:2 }}</td>
+                                    <td>{{ venta.descuento|floatformat:1 }}%</td>
+                                    <td><strong>Q{{ venta.total|floatformat:2 }}</strong></td>
+                                    <td>
+                                        {% if venta.estado == 'pendiente' %}
+                                            <span class="badge bg-warning">{{ venta.estado|title }}</span>
+                                        {% elif venta.estado == 'confirmada' %}
+                                            <span class="badge bg-primary">{{ venta.estado|title }}</span>
+                                        {% elif venta.estado == 'enviada' %}
+                                            <span class="badge bg-info">{{ venta.estado|title }}</span>
+                                        {% elif venta.estado == 'entregada' %}
+                                            <span class="badge bg-success">{{ venta.estado|title }}</span>
+                                        {% elif venta.estado == 'cancelada' %}
+                                            <span class="badge bg-danger">{{ venta.estado|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>{{ venta.fecha_venta|date:"d/m/Y" }}</div>
+                                        <small class="text-muted">{{ venta.fecha_venta|time:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'venta_detail' venta.venta_id %}" 
+                                               class="btn btn-outline-primary" title="Ver Detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'venta_edit' venta.venta_id %}" 
+                                               class="btn btn-outline-warning" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'venta_delete' venta.venta_id %}" 
+                                               class="btn btn-outline-danger" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Resumen estadístico -->
+                    <div class="row mt-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ ventas|length }}</h4>
+                                    <p>Total Ventas</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4>Q{{ ingresos_totales|floatformat:2|default:0 }}</h4>
+                                    <p>Ingresos Totales</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ ventas|length|default:0 }}</h4>
+                                    <p>Clientes Únicos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ ventas|length|default:0 }}</h4>
+                                    <p>Libros Vendidos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <h4>No hay ventas registradas</h4>
+                        <p class="text-muted">Comienza creando tu primera venta</p>
+                        <a href="{% url 'venta_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Crear Primera Venta
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enlaces rápidos -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x text-primary mb-3"></i>
+                <h5>Gestionar Clientes</h5>
+                <p>Crear y administrar clientes</p>
+                <a href="{% url 'cliente_list' %}" class="btn btn-outline-primary">Ver Clientes</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-book-open fa-2x text-success mb-3"></i>
+                <h5>Gestionar Libros</h5>
+                <p>Crear y administrar inventario</p>
+                <a href="{% url 'libro_list' %}" class="btn btn-outline-success">Ver Libros</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-cog fa-2x text-warning mb-3"></i>
+                <h5>Administración</h5>
+                <p>Panel de administración Django</p>
+                <a href="/admin/" target="_blank" class="btn btn-outline-warning">Ir a Admin</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'libros/base.html' %}
+
+{% block content %}
+<h2>Detalle de Venta #{{ venta.id }}</h2>
+
+<ul>
+    <li><strong>Cliente:</strong> {{ venta.cliente }}</li>
+    <li><strong>Libro:</strong> {{ venta.libro }}</li>
+    <li><strong>Cantidad:</strong> {{ venta.cantidad }}</li>
+    <li><strong>Precio Unitario:</strong> {{ venta.precio_unitario }}</li>
+    <li><strong>Descuento:</strong> {{ venta.descuento }}</li>
+    <li><strong>Estado:</strong> {{ venta.estado }}</li>
+    <li><strong>Fecha:</strong> {{ venta.fecha_venta }}</li>
+</ul>
+
+<a href="{% url 'reporte_ventas' %}" class="btn btn-secondary">Ver todas las ventas</a>
+{% endblock %}

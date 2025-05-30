@@ -1,0 +1,49 @@
+{% extends 'libros/base.html' %}
+
+{% block title %}Reporte de Ventas - {{ block.super }}{% endblock %}
+
+{% block header %}
+<h1><i class="fas fa-chart-bar"></i> Reporte de Ventas</h1>
+<p class="lead">Visualización de todas las ventas registradas</p>
+<hr>
+{% endblock %}
+
+{% block content %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Libro</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Descuento</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for venta in ventas %}
+            <tr>
+                <td>{{ venta.venta_id }}</td>
+                <td>{{ venta.fecha_venta }}</td>
+                <td>{{ venta.cliente }}</td>
+                <td>{{ venta.libro }}</td>
+                <td>{{ venta.cantidad }}</td>
+                <td>Q{{ venta.precio_unitario }}</td>
+                <td>{{ venta.descuento }}%</td>
+                <td>{{ venta.estado }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">No hay ventas registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<a href="{% url 'venta_create' %}" class="btn btn-primary mt-3">
+    <i class="fas fa-plus"></i> Nueva Venta
+</a>
+{% endblock %}
